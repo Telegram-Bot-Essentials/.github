@@ -1,0 +1,43 @@
+name: stale
+
+# Reusable. Callers:
+#
+#   on:
+#     schedule: [{ cron: '0 4 * * 1' }]
+#     workflow_dispatch:
+#   jobs:
+#     stale:
+#       uses: Telegram-Bot-Essentials/.github/.github/workflows/stale.yml@main
+#
+# Deliberately label-only — it flags threads that have gone quiet but never
+# auto-closes them. A solo-maintained project can't afford to lose a real bug
+# report to a timer.
+
+on:
+  workflow_call:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 90
+          days-before-close: -1
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: 'bug,security,pinned,help wanted,good first issue'
+          exempt-pr-labels: 'pinned,security'
+          exempt-all-milestones: true
+          stale-issue-message: >
+            No activity here for 90 days. Marking it `stale` for triage — it
+            won't be closed automatically. A comment or a maintainer removing
+            the label clears it.
+          stale-pr-message: >
+            This PR has been quiet for 90 days. Marking it `stale`; it stays
+            open. Rebase or comment to pick it back up.
+          operations-per-run: 60

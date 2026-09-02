@@ -1,0 +1,52 @@
+name: pr-size
+
+# Reusable. Callers:
+#
+#   on:
+#     pull_request_target:
+#       types: [opened, synchronize, reopened]
+#   jobs:
+#     size:
+#       uses: Telegram-Bot-Essentials/.github/.github/workflows/pr-size.yml@main
+#
+# Adds one size/* label (xs .. xl) by changed-line count. No third-party
+# action, no config file — keeps a growing PR queue skimmable.
+
+on:
+  workflow_call:
+
+permissions:
+  pull-requests: write
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label by size
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          read additions deletions < <(
+            gh pr view "$PR" --repo "$REPO" --json additions,deletions \
+              --jq '"\(.additions) \(.deletions)"'
+          )
+          changed=$(( additions + deletions ))
+          if   [ "$changed" -le 9    ]; then size="size/xs"
+          elif [ "$changed" -le 49   ]; then size="size/s"
+          elif [ "$changed" -le 199  ]; then size="size/m"
+          elif [ "$changed" -le 599  ]; then size="size/l"
+          else                              size="size/xl"
+          fi
+          echo "changed=$changed -> $size"
+
+          # ensure the label exists (idempotent), then swap any other size/* for it
+          gh label create "$size" --repo "$REPO" --color ededed --force >/dev/null 2>&1 || true
+          existing=$(gh pr view "$PR" --repo "$REPO" --json labels \
+            --jq '.labels[].name | select(startswith("size/"))')
+          for l in $existing; do
+            [ "$l" = "$size" ] || gh pr edit "$PR" --repo "$REPO" --remove-label "$l"
+          done
+          gh pr edit "$PR" --repo "$REPO" --add-label "$size"

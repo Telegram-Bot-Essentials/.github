@@ -35,13 +35,11 @@ jobs:
         dependencies: ['highest']
         include:
           # Proves the declared version floors actually resolve and pass.
-          # Non-blocking until the floors are audited across the suite.
+          # Audited green across all 10 packages 2026-09-02 — now blocking.
           - php: '8.3'
             laravel: '12'
             dependencies: 'lowest'
-            experimental: true
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} (${{ matrix.dependencies }})
-    continue-on-error: ${{ matrix.experimental == true }}
     steps:
       - uses: actions/checkout@v4
 
