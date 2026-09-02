@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate preset for telegram-bot-essentials/* repos.",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard",
+    ":prConcurrentLimit10",
+    "group:monorepos",
+    "group:recommended"
+  ],
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Pin GitHub Actions to commit SHAs and group their updates.",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Group all non-major Composer dev-dependency bumps.",
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require-dev"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "composer dev-dependencies"
+    },
+    {
+      "description": "Never let Renovate touch the essence peer constraint - that moves by hand with a CHANGELOG entry.",
+      "matchPackageNames": ["telegram-bot-essentials/essence"],
+      "enabled": false
+    }
+  ]
+}

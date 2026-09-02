@@ -1,0 +1,99 @@
+name: ci
+
+# Reusable CI for every telegram-bot-essentials/* package. Callers:
+#
+#   jobs:
+#     ci:
+#       uses: Telegram-Bot-Essentials/.github/.github/workflows/ci.yml@main
+#
+# Every package exposes the same composer scripts (test / lint / analyse), so
+# this workflow makes no per-package assumptions beyond that.
+
+on:
+  workflow_call:
+    inputs:
+      php-versions:
+        description: JSON array of PHP versions for the test matrix.
+        type: string
+        default: '["8.3", "8.4", "8.5"]'
+      laravel-versions:
+        description: JSON array of Laravel major versions for the test matrix.
+        type: string
+        default: '["12", "13"]'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(inputs.php-versions) }}
+        laravel: ${{ fromJSON(inputs.laravel-versions) }}
+        dependencies: ['highest']
+        include:
+          # Proves the declared version floors actually resolve and pass.
+          # Non-blocking until the floors are audited across the suite.
+          - php: '8.3'
+            laravel: '12'
+            dependencies: 'lowest'
+            experimental: true
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} (${{ matrix.dependencies }})
+    continue-on-error: ${{ matrix.experimental == true }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, curl, libxml, bcmath, gd, exif, iconv, fileinfo, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Pin Laravel major
+        run: composer require "laravel/framework:^${{ matrix.laravel }}" --no-update --no-interaction
+
+      - name: Install dependencies
+        run: >
+          composer update --prefer-dist --no-interaction --no-progress
+          ${{ matrix.dependencies == 'lowest' && '--prefer-lowest' || '' }}
+
+      - name: Run tests
+        run: composer test
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, dom, curl, libxml, bcmath, gd, exif, iconv, fileinfo, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-publish
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Pint
+        run: composer lint
+
+      - name: PHPStan
+        run: composer analyse
+
+  ci-passed:
+    # Single stable context for branch-protection required checks: `ci / ci-passed`.
+    if: always()
+    needs: [tests, static-analysis]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "CI passed"

@@ -1,0 +1,38 @@
+name: release
+
+# Reusable release workflow. Callers, on a pushed v* tag:
+#
+#   on:
+#     push:
+#       tags: ['v*']
+#   jobs:
+#     release:
+#       uses: Telegram-Bot-Essentials/.github/.github/workflows/release.yml@main
+#
+# Creates the GitHub Release for the tag with notes generated from the merged
+# PRs / commits since the previous tag. Packagist picks the tag up via each
+# repo's push webhook independently.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            --verify-tag
