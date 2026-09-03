@@ -34,11 +34,22 @@ the type rather than regenerating the baseline to hide it.
 
 ## Commit style
 
-[Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `refactor:`,
-`chore:`, `docs:`, `test:`, `ci:`), with a `!` after the type and a `BREAKING CHANGE:`
-footer for anything that breaks the public API. `git log` is the best reference for the
-tone and level of detail expected in a commit body — explain *why*, not just what changed.
-Prefer one focused commit per logical change over a large commit bundling several concerns.
+[Conventional Commits](https://www.conventionalcommits.org/) as `type(scope): summary`,
+where `type` is one of `feat` / `fix` / `refactor` / `chore` / `docs` / `test` / `ci`, with
+a `!` before the colon and a `BREAKING CHANGE:` footer for anything that breaks the public
+API.
+
+Slice a change into **one commit per layer, committed bottom-up** — schema → model →
+service/handler → resource → tests → docs is that many commits, not one bundled `feat`. The
+`scope` names the work stream and stays constant across the whole slice, so
+`git log --grep <scope>` returns it whole; the `type` tracks each layer. When a change is
+also split by permission tier, tag the tier at the end of the summary:
+
+    refactor(essence-0.12): guard pruned message meta on resume (Admin)
+
+Summaries are lowercase and imperative. Substantive commits carry a wrapped body explaining
+*why*; trivial chores carry none — `git log` is the reference for tone. No AI-attribution
+or `Co-Authored-By` trailers.
 
 ## Versioning
 
