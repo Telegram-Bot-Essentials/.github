@@ -38,7 +38,33 @@ the type rather than regenerating the baseline to hide it.
 `chore:`, `docs:`, `test:`, `ci:`), with a `!` after the type and a `BREAKING CHANGE:`
 footer for anything that breaks the public API. `git log` is the best reference for the
 tone and level of detail expected in a commit body — explain *why*, not just what changed.
-Prefer one focused commit per logical change over a large commit bundling several concerns.
+
+### One commit per layer, not one commit per feature
+
+A change that spans migration → model → validation → service/handler → resource → tests →
+docs is that many commits, committed bottom-up — not a single large `feat`. The cut is the
+architectural layer the code lives in, ranked roughly:
+
+```
+migration/schema < model/entity < request/validation/rule
+  < service/controller/handler/job < resource/serializer/view
+  < test/spec < doc/readme < config/chore
+```
+
+Rules for the slice:
+
+- **Scope is the feature and stays constant** across the whole series, so
+  `git log --grep <scope>` returns it whole. **Type is each layer's nature** (`feat` for
+  the behavior commit, `test` for its tests, `docs` for the doc update, …).
+- Subject ≤50 chars, lowercase, imperative mood.
+- Substantive commits carry a wrapped body saying *why*; trivial chores carry none.
+- No AI-attribution or `Co-Authored-By` trailers.
+- Intermediate commits need not be individually green (the model commit lands before its
+  migration's tests); the series as a whole must build.
+- Split a single file across two commits only when it genuinely holds two unrelated changes.
+
+Two unrelated top-level areas (say `routes/` and `app/Providers/`) are two commits even
+when they share a layer rank.
 
 ## Versioning
 
