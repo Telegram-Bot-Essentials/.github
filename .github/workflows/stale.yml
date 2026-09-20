@@ -5,6 +5,9 @@ name: stale
 #   on:
 #     schedule: [{ cron: '0 4 * * 1' }]
 #     workflow_dispatch:
+#   permissions:
+#     issues: write
+#     pull-requests: write
 #   jobs:
 #     stale:
 #       uses: Telegram-Bot-Essentials/.github/.github/workflows/stale.yml@main
@@ -12,6 +15,10 @@ name: stale
 # Deliberately label-only — it flags threads that have gone quiet but never
 # auto-closes them. A solo-maintained project can't afford to lose a real bug
 # report to a timer.
+
+# The `permissions:` block on the caller is required: the org default token is
+# read-only and a caller cannot hand a reusable workflow more than it holds, so
+# omitting it makes the run fail at startup with no job logs.
 
 on:
   workflow_call:
