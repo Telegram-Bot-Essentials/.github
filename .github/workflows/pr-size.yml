@@ -5,12 +5,18 @@ name: pr-size
 #   on:
 #     pull_request_target:
 #       types: [opened, synchronize, reopened]
+#   permissions:
+#     pull-requests: write
 #   jobs:
 #     size:
 #       uses: Telegram-Bot-Essentials/.github/.github/workflows/pr-size.yml@main
 #
 # Adds one size/* label (xs .. xl) by changed-line count. No third-party
 # action, no config file — keeps a growing PR queue skimmable.
+
+# The `permissions:` block on the caller is required: the org default token is
+# read-only and a caller cannot hand a reusable workflow more than it holds, so
+# omitting it makes the run fail at startup with no job logs.
 
 on:
   workflow_call:
